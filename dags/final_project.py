@@ -21,30 +21,34 @@ default_args = {
     schedule_interval='0 * * * *'
 )
 def final_project():
-    # metastoreBackend = MetastoreBackend()
-    # aws_connection = metastoreBackend.get_connection("aws_credentials")
-    # redshift_conn_id = metastoreBackend.get_connection("redshift")
-    # bucket = Variable.get("s3_bucket")
+    metastoreBackend = MetastoreBackend()
+    aws_connection = metastoreBackend.get_connection("aws_credentials")
+    bucket = Variable.get("s3_bucket")
+    s3_region = Variable.get("s3_region")
 
     start_operator = DummyOperator(task_id='Begin_execution')
 
-    @task
-    def check_creds():
-        logging.info('success')
-        # logging.info(f"bucket is {bucket}")
-        # logging.info(f"aws_connection.password is {aws_connection}")
-        # logging.info(f"aws_connection.login is {aws_connection}")
-    # stage_events_to_redshift = StageToRedshiftOperator(
-    #     task_id='Stage_events',
-    #     table = 'staging_events',
-    #     redshift_conn_id = redshift_conn_id,
-    #     aws_user = aws_connection.login,
-    #     aws_password = aws_connection.password,
-    # )
+    stage_events_to_redshift = StageToRedshiftOperator(
+        task_id='Stage_events',
+        table = 'staging_events',
+        redshift_conn_id = 'redshift',
+        aws_user = aws_connection.login,
+        aws_pw = aws_connection.password,
+        s3_path = f"s3://{bucket}/log_data",
+        region = s3_region,
+        json = f"s3://{bucket}/log_json_path.json"
+    )
 
-    # stage_songs_to_redshift = StageToRedshiftOperator(
-    #     task_id='Stage_songs',
-    # )
+    stage_songs_to_redshift = StageToRedshiftOperator(
+        task_id='Stage_songs',
+        table = 'staging_songs',
+        redshift_conn_id = 'redshift',
+        aws_user = aws_connection.login,
+        aws_pw = aws_connection.password,
+        s3_path = f"s3://{bucket}/song-data",
+        region = s3_region,
+        json = "auto"
+    )
 
     # load_songplays_table = LoadFactOperator(
     #     task_id='Load_songplays_fact_table',
@@ -72,8 +76,6 @@ def final_project():
 
     stop_operator = DummyOperator(task_id='Stop_execution')
 
-    check_cred = check_creds()
-
-    start_operator >> check_cred >> stop_operator
+    start_operator >> [stage_events_to_redshift, stage_songs_to_redshift] >> stop_operator
     
 final_project_dag = final_project()

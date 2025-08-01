@@ -14,6 +14,7 @@ class StageToRedshiftOperator(BaseOperator):
                  table="",
                  s3_path="",
                  json = "",
+                 region = "",
                  *args, **kwargs):
 
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
@@ -24,6 +25,7 @@ class StageToRedshiftOperator(BaseOperator):
         self.json = json
         self.aws_user = aws_user
         self.aws_pw = aws_pw
+        self.region = region
 
     def execute(self, context):        
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
@@ -38,7 +40,8 @@ class StageToRedshiftOperator(BaseOperator):
             FROM '{self.s3_path}'
             ACCESS_KEY_ID '{self.aws_user}'
             SECRET_ACCESS_KEY '{self.aws_pw}'
-            JSON {self.json}
+            REGION '{self.region}'
+            JSON '{self.json}'
         """
         redshift.run(formatted_sql)
 
