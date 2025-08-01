@@ -8,19 +8,39 @@ class StageToRedshiftOperator(BaseOperator):
     @apply_defaults
     def __init__(self,
                  # Define your operators params (with defaults) here
-                 # Example:
-                 # redshift_conn_id=your-connection-name
+                 redshift_conn_id="",
+                 aws_user="",
+                 aws_pw="",
+                 table="",
+                 s3_path="",
+                 json = "",
                  *args, **kwargs):
 
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
         # Map params here
-        # Example:
-        # self.conn_id = conn_id
+        self.table = table
+        self.redshift_conn_id = redshift_conn_id
+        self.s3_path = s3_path
+        self.json = json
+        self.aws_user = aws_user
+        self.aws_pw = aws_pw
 
-    def execute(self, context):
-        self.log.info('StageToRedshiftOperator not implemented yet')
+    def execute(self, context):        
+        redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
+        self.log.info(f"Clearing data from {self.table}")
+        redshift.run("truncate {}".format(self.table))
 
+        self.log.info("Copying data from S3 to Redshift")
+
+        formatted_sql = f"""
+            COPY {self.table}
+            FROM '{self.s3_path}'
+            ACCESS_KEY_ID '{self.aws_user}'
+            SECRET_ACCESS_KEY '{self.aws_pw}'
+            JSON {self.json}
+        """
+        redshift.run(formatted_sql)
 
 
 
