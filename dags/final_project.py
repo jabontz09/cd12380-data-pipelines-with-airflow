@@ -92,7 +92,7 @@ def final_project():
 
     run_quality_checks = DataQualityOperator(
         task_id='Run_data_quality_checks',
-        redshift_conn_id = "",
+        redshift_conn_id = "redshift",
         tables = ['songplays, users, songs, artists, time'],
     )
 
