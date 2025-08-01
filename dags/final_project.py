@@ -84,7 +84,8 @@ def final_project():
     )
 
     load_time_dimension_table = LoadDimensionOperator(
-        task_id='Load_time_dim_table',redshift_conn_id = 'redshift',
+        task_id='Load_time_dim_table',
+        redshift_conn_id = 'redshift',
         table = 'time',
         select_statement = SqlQueries.time_table_insert,
         append_only = False
@@ -93,7 +94,7 @@ def final_project():
     run_quality_checks = DataQualityOperator(
         task_id='Run_data_quality_checks',
         redshift_conn_id = "redshift",
-        tables = ['songplays, users, songs, artists, time'],
+        tables = ['songplays', 'users', 'songs', 'artists', 'time']
     )
 
     stop_operator = DummyOperator(task_id='Stop_execution')
